@@ -53,7 +53,7 @@ func HandleWebhook(syscfg *config.Config) http.HandlerFunc {
 								slog.Error("[handler.line] failed to generate token", "error", err)
 								return
 							}
-							if _, err := cli.ReplyTextMessage(e.ReplyToken, fmt.Sprintf("Hello, here is your group ID:\n%s", src.GroupId)); err != nil {
+							if _, err := cli.ReplyTextMessage(e.ReplyToken, "", fmt.Sprintf("Hello, here is your group ID:\n%s", src.GroupId)); err != nil {
 								slog.Error("[handler.line] failed to send text reply", "error", err, "groupID", src.GroupId)
 							} else {
 								slog.Info("[handler.line] sent text reply", "groupID", src.GroupId)
@@ -88,7 +88,7 @@ func HandleWebhook(syscfg *config.Config) http.HandlerFunc {
 								slog.Error("[handler.line] failed to generate token", "error", err)
 								return
 							}
-							if _, err := cli.ReplyTextMessage(e.ReplyToken, fmt.Sprintf("Hello, you said: %s", msg.Text)); err != nil {
+							if _, err := cli.ReplyTextMessage(e.ReplyToken, msg.QuoteToken, fmt.Sprintf("Hello, you said: %s", msg.Text)); err != nil {
 								slog.Error("[handler.line] failed to send text reply", "error", err)
 							} else {
 								slog.Info("[handler.line] sent text reply")

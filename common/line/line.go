@@ -190,14 +190,18 @@ func (s *Client) getChannelAccessToken(jwtToken string) (string, *time.Time, err
 	return accessToken, &expiredAt, nil
 }
 
-func (s *Client) ReplyTextMessage(replyToken string, text string) (*messaging_api.ReplyMessageResponse, error) {
+func (s *Client) ReplyTextMessage(replyToken, quoteToken string, text string) (*messaging_api.ReplyMessageResponse, error) {
+	msg := messaging_api.TextMessage{
+		Text: text,
+	}
+	if quoteToken != "" {
+		msg.QuoteToken = quoteToken
+	}
 	resp, err := s.bot.ReplyMessage(
 		&messaging_api.ReplyMessageRequest{
 			ReplyToken: replyToken,
 			Messages: []messaging_api.MessageInterface{
-				messaging_api.TextMessage{
-					Text: text,
-				},
+				msg,
 			},
 		},
 	)
