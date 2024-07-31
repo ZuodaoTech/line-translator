@@ -1,0 +1,26 @@
+db:
+  driver: "postgres"
+  dsn: "user=foo dbname=bar host=foofoo password=barbar sslmode=disable"
+
+sys:
+  host: "http://127.0.0.1"
+  api_base: "http://127.0.0.1"
+  hash_id_salt: "abc"
+
+auth:
+  jwt_secret: "abc1234"
+
+aws:
+  key: ""
+  secret: ""
+  region: "us-east-1"
+
+openai:
+  api_key: ""
+
+line:
+  channel_id: ""
+  channel_key: ""
+  channel_secret: ""
+  jwt_public_key: ""
+  jwt_private_key: ""
