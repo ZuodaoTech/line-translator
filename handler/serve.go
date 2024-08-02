@@ -6,6 +6,7 @@ import (
 
 	"github.com/zuodaotech/line-translator/common/assistant"
 	"github.com/zuodaotech/line-translator/config"
+	"github.com/zuodaotech/line-translator/core"
 	"github.com/zuodaotech/line-translator/handler/line"
 	"github.com/zuodaotech/line-translator/handler/render"
 	"github.com/zuodaotech/line-translator/handler/sys"
@@ -17,9 +18,10 @@ import (
 func New(
 	cfg Config,
 	syscfg *config.Config,
-
 	se *session.Session,
 	composeAssistant *assistant.Assistant,
+
+	taskz core.TaskService,
 ) Server {
 
 	return Server{
@@ -27,6 +29,8 @@ func New(
 		syscfg:    syscfg,
 		session:   se,
 		assistant: composeAssistant,
+
+		taskz: taskz,
 	}
 }
 
@@ -35,11 +39,12 @@ type (
 	}
 
 	Server struct {
-		cfg     Config
-		syscfg  *config.Config
-		session *session.Session
-
+		cfg       Config
+		syscfg    *config.Config
+		session   *session.Session
 		assistant *assistant.Assistant
+
+		taskz core.TaskService
 	}
 )
 
@@ -51,7 +56,7 @@ func (s Server) HandleRest() http.Handler {
 	})
 
 	r.Route("/line", func(r chi.Router) {
-		r.Post("/webhook", line.HandleWebhook(s.syscfg))
+		r.Post("/webhook", line.HandleWebhook(s.syscfg, s.taskz))
 	})
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {

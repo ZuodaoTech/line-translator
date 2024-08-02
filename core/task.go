@@ -14,7 +14,7 @@ const (
 )
 
 const (
-	TaskActionTranslate = "translate"
+	TaskActionQuoteAndTranslate = "quote_and_translate"
 )
 
 type (

@@ -9,11 +9,13 @@ import (
 	"github.com/line/line-bot-sdk-go/v8/linebot/webhook"
 	"github.com/zuodaotech/line-translator/common/line"
 	"github.com/zuodaotech/line-translator/config"
+	"github.com/zuodaotech/line-translator/core"
 	"github.com/zuodaotech/line-translator/handler/render"
 )
 
-func HandleWebhook(syscfg *config.Config) http.HandlerFunc {
+func HandleWebhook(syscfg *config.Config, taskz core.TaskService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		// parse webhook
 		cb, err := webhook.ParseRequest(syscfg.Line.ChannelSecret, r)
 		if err != nil {
@@ -53,6 +55,7 @@ func HandleWebhook(syscfg *config.Config) http.HandlerFunc {
 								slog.Error("[handler.line] failed to generate token", "error", err)
 								return
 							}
+
 							if _, err := cli.ReplyTextMessage(e.ReplyToken, "", fmt.Sprintf("Hello, here is your group ID:\n%s", src.GroupId)); err != nil {
 								slog.Error("[handler.line] failed to send text reply", "error", err, "groupID", src.GroupId)
 							} else {
@@ -73,26 +76,45 @@ func HandleWebhook(syscfg *config.Config) http.HandlerFunc {
 					case webhook.TextMessageContent:
 						{
 							slog.Info("[handler.line] text message", "text", msg.Text)
-							cli, err := line.New(line.Config{
-								ChannelID:  syscfg.Line.ChannelID,
-								ChannelKey: syscfg.Line.ChannelKey,
-								PrivateKey: syscfg.Line.JWTPrivateKey,
-							})
-							if err != nil {
-								slog.Error("[handler.line] failed to create line client", "error", err)
+
+							// create a task
+							data := &core.Task{
+								UserID: 0,
+								Action: core.TaskActionQuoteAndTranslate,
+								Params: map[string]interface{}{
+									"reply_token": e.ReplyToken,
+									"quote_token": msg.QuoteToken,
+									"text":        msg.Text,
+								},
+								Status: core.TaskStatusInit,
+							}
+
+							if _, err := taskz.CreateTask(ctx, data); err != nil {
+								slog.Error("[handler.line] failed to create task", "error", err)
 								render.Error(w, http.StatusInternalServerError, err)
 								return
 							}
-							_, _, err = cli.GenerateToken()
-							if err != nil {
-								slog.Error("[handler.line] failed to generate token", "error", err)
-								return
-							}
-							if _, err := cli.ReplyTextMessage(e.ReplyToken, msg.QuoteToken, fmt.Sprintf("Hello, you said: %s", msg.Text)); err != nil {
-								slog.Error("[handler.line] failed to send text reply", "error", err)
-							} else {
-								slog.Info("[handler.line] sent text reply")
-							}
+
+							// cli, err := line.New(line.Config{
+							// 	ChannelID:  syscfg.Line.ChannelID,
+							// 	ChannelKey: syscfg.Line.ChannelKey,
+							// 	PrivateKey: syscfg.Line.JWTPrivateKey,
+							// })
+							// if err != nil {
+							// 	slog.Error("[handler.line] failed to create line client", "error", err)
+							// 	render.Error(w, http.StatusInternalServerError, err)
+							// 	return
+							// }
+							// _, _, err = cli.GenerateToken()
+							// if err != nil {
+							// 	slog.Error("[handler.line] failed to generate token", "error", err)
+							// 	return
+							// }
+							// if _, err := cli.ReplyTextMessage(e.ReplyToken, msg.QuoteToken, fmt.Sprintf("Hello, you said: %s", msg.Text)); err != nil {
+							// 	slog.Error("[handler.line] failed to send text reply", "error", err)
+							// } else {
+							// 	slog.Info("[handler.line] sent text reply")
+							// }
 						}
 					}
 				}

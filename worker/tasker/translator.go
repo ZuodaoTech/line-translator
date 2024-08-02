@@ -4,53 +4,57 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 
 	"github.com/zuodaotech/line-translator/core"
 )
 
-func (w *Worker) ProcessTaskActionTranslate(ctx context.Context, task *core.Task) (core.JSONMap, error) {
+func (w *Worker) ProcessTaskActionQuoteAndTranslate(ctx context.Context, task *core.Task) (core.JSONMap, error) {
 	text := task.Params.GetString("text")
-	dstLang := task.Params.GetString("dst_lang")
 	if text == "" {
 		return nil, fmt.Errorf("source is empty")
 	}
-	if dstLang == "" {
-		dstLang = "English"
+
+	srcLang, found := w.detector.Detect(text)
+	if !found {
+		srcLang = "en"
 	}
 
-	// if the text is too long, split it into multiple parts
-	// each part is less than 30 lines
-	// then translate each part
-	// finally, combine all parts together
-	lines := strings.Split(text, "\n")
-	translateParts := make([]string, 0)
-	if len(lines) > 30 {
-		for i := 0; i < len(lines); i += 30 {
-			end := i + 30
-			if end > len(lines) {
-				end = len(lines)
-			}
-			part := strings.Join(lines[i:end], "\n")
-			translateParts = append(translateParts, part)
-		}
-	} else {
-		translateParts = append(translateParts, text)
+	dstLang := "en"
+	if srcLang == "zh" {
+		dstLang = "ja"
+	} else if srcLang == "ja" {
+		dstLang = "zh"
 	}
 
-	translated := ""
-	for _, part := range translateParts {
-		result, err := w.assi.Translate(ctx, part)
+	var err error
+	result := text
+	if srcLang != "en" && srcLang != dstLang {
+		result, err = w.assi.Translate(ctx, text, srcLang, dstLang)
 		if err != nil {
 			slog.Error("translate failed.", "error", err)
-			break
+			return nil, err
 		}
-		translated += result + "\n"
 	}
 
 	jsonMap := core.NewJSONMap()
-	jsonMap.SetValue("translated", translated)
-	jsonMap.SetValue("improved", translated)
+	jsonMap.SetValue("translated", result)
+
+	// send the message back
+	replyToken := task.Params.GetString("reply_token")
+	quoteToken := task.Params.GetString("quote_token")
+
+	if replyToken != "" {
+		_, _, err = w.lineCli.GenerateToken()
+		if err != nil {
+			slog.Error("[handler.line] failed to generate token", "error", err)
+			return nil, err
+		}
+		if _, err := w.lineCli.ReplyTextMessage(replyToken, quoteToken, fmt.Sprintf("You said: %s", result)); err != nil {
+			slog.Error("[handler.line] failed to send text reply", "error", err)
+		} else {
+			slog.Info("[handler.line] sent text reply")
+		}
+	}
 
 	return jsonMap, nil
 }

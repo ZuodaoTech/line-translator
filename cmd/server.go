@@ -14,6 +14,10 @@ import (
 	"github.com/zuodaotech/line-translator/common/assistant"
 	"github.com/zuodaotech/line-translator/config"
 	"github.com/zuodaotech/line-translator/handler"
+	taskZ "github.com/zuodaotech/line-translator/service/task"
+	"github.com/zuodaotech/line-translator/store"
+	"github.com/zuodaotech/line-translator/store/task"
+	"github.com/zuodaotech/line-translator/worker/tasker"
 
 	"github.com/zuodaotech/line-translator/session"
 
@@ -59,10 +63,25 @@ var serverCmd = &cobra.Command{
 
 		composeAssistant := assistant.New(assistant.Config{}, aiInst)
 
+		// db & stores
+		h := store.MustInit(store.Config{
+			Driver: cfg.DB.Driver,
+			DSN:    cfg.DB.DSN,
+		})
+		tasks := task.New(h)
+
+		taskz := taskZ.New(taskZ.Config{}, tasks)
+
 		g := errgroup.Group{}
 
 		if !httpdOnly {
-			workers := []worker.Worker{}
+			workers := []worker.Worker{
+				tasker.New(tasker.Config{
+					LineChannelID:     cfg.Line.ChannelID,
+					LineChannelKey:    cfg.Line.ChannelKey,
+					LineJWTPrivateKey: cfg.Line.JWTPrivateKey,
+				}, composeAssistant, tasks, taskz),
+			}
 
 			g, ctx := errgroup.WithContext(ctx)
 			for idx := range workers {
@@ -86,6 +105,7 @@ var serverCmd = &cobra.Command{
 					cfg,
 					se,
 					composeAssistant,
+					taskz,
 				)
 				restHandler := restSvr.HandleRest()
 

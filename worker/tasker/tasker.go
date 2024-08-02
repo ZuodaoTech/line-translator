@@ -6,34 +6,55 @@ import (
 	"time"
 
 	"github.com/zuodaotech/line-translator/common/assistant"
+	"github.com/zuodaotech/line-translator/common/langdetect"
+	"github.com/zuodaotech/line-translator/common/line"
 	"github.com/zuodaotech/line-translator/core"
 )
 
 type (
 	Config struct {
+		LineChannelID     string
+		LineChannelKey    string
+		LineJWTPrivateKey string
 	}
 
 	Worker struct {
 		cfg   Config
-		tasks core.TaskStore
-
-		taskz core.TaskService
 		assi  *assistant.Assistant
+		tasks core.TaskStore
+		taskz core.TaskService
+
+		lineCli  *line.Client
+		detector *langdetect.Detector
 	}
 )
 
 func New(
 	cfg Config,
+	assi *assistant.Assistant,
 	tasks core.TaskStore,
 	taskz core.TaskService,
-	assi *assistant.Assistant,
 ) *Worker {
+	lineCli, err := line.New(line.Config{
+		ChannelID:  cfg.LineChannelID,
+		ChannelKey: cfg.LineChannelKey,
+		PrivateKey: cfg.LineJWTPrivateKey,
+	})
+	if err != nil {
+		slog.Error("[handler.line] failed to create line client", "error", err)
+		return nil
+	}
+
+	detector := langdetect.New()
 
 	return &Worker{
 		cfg:   cfg,
+		assi:  assi,
 		tasks: tasks,
 		taskz: taskz,
-		assi:  assi,
+
+		lineCli:  lineCli,
+		detector: detector,
 	}
 }
 
@@ -73,8 +94,8 @@ func (w *Worker) ProcessTask(ctx context.Context, task *core.Task) error {
 	var err error
 	var output core.JSONMap
 	switch task.Action {
-	case core.TaskActionTranslate:
-		output, err = w.ProcessTaskActionTranslate(ctx, task)
+	case core.TaskActionQuoteAndTranslate:
+		output, err = w.ProcessTaskActionQuoteAndTranslate(ctx, task)
 	}
 
 	if err != nil {
