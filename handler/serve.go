@@ -57,6 +57,7 @@ func (s Server) HandleRest() http.Handler {
 
 	r.Route("/line", func(r chi.Router) {
 		r.Post("/webhook", line.HandleWebhook(s.syscfg, s.taskz))
+		r.Get("/webhook", sys.RenderRoot())
 	})
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
