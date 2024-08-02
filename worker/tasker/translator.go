@@ -46,13 +46,13 @@ func (w *Worker) ProcessTaskActionQuoteAndTranslate(ctx context.Context, task *c
 	if replyToken != "" {
 		_, _, err = w.lineCli.GenerateToken()
 		if err != nil {
-			slog.Error("[handler.line] failed to generate token", "error", err)
+			slog.Error("[worker.tasker.translator] failed to generate token", "error", err)
 			return nil, err
 		}
-		if _, err := w.lineCli.ReplyTextMessage(replyToken, quoteToken, fmt.Sprintf("You said: %s", result)); err != nil {
-			slog.Error("[handler.line] failed to send text reply", "error", err)
+		if _, err := w.lineCli.ReplyTextMessage(replyToken, quoteToken, result); err != nil {
+			slog.Error("[worker.tasker.translator] failed to send text reply", "error", err)
 		} else {
-			slog.Info("[handler.line] sent text reply")
+			slog.Info("[worker.tasker.translator] sent text reply")
 		}
 	}
 
