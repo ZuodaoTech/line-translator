@@ -58,6 +58,7 @@ require (
 	github.com/lestrrat-go/jwx/v2 v2.1.1
 	github.com/line/line-bot-sdk-go v7.8.0+incompatible
 	github.com/line/line-bot-sdk-go/v8 v8.7.0
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pemistahl/lingua-go v1.4.0
 	github.com/pressly/goose/v3 v3.21.1
 	github.com/rs/cors v1.11.0

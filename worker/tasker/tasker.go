@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/patrickmn/go-cache"
 	"github.com/zuodaotech/line-translator/common/assistant"
 	"github.com/zuodaotech/line-translator/common/langdetect"
-	"github.com/zuodaotech/line-translator/common/line"
 	"github.com/zuodaotech/line-translator/core"
 )
 
@@ -24,8 +24,8 @@ type (
 		tasks core.TaskStore
 		taskz core.TaskService
 
-		lineCli  *line.Client
-		detector *langdetect.Detector
+		detector   *langdetect.Detector
+		tokenCache *cache.Cache
 	}
 )
 
@@ -35,17 +35,10 @@ func New(
 	tasks core.TaskStore,
 	taskz core.TaskService,
 ) *Worker {
-	lineCli, err := line.New(line.Config{
-		ChannelID:  cfg.LineChannelID,
-		ChannelKey: cfg.LineChannelKey,
-		PrivateKey: cfg.LineJWTPrivateKey,
-	})
-	if err != nil {
-		slog.Error("[handler.line] failed to create line client", "error", err)
-		return nil
-	}
 
 	detector := langdetect.New()
+
+	c := cache.New(5*time.Minute, 10*time.Minute)
 
 	return &Worker{
 		cfg:   cfg,
@@ -53,8 +46,8 @@ func New(
 		tasks: tasks,
 		taskz: taskz,
 
-		lineCli:  lineCli,
-		detector: detector,
+		detector:   detector,
+		tokenCache: c,
 	}
 }
 
