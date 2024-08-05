@@ -40,6 +40,9 @@ func (w *Worker) ProcessTaskActionQuoteAndTranslate(ctx context.Context, task *c
 		dstLang = "zh"
 	}
 
+	fmt.Printf("srcLang: %v\n", srcLang)
+	fmt.Printf("dstLang: %v\n", dstLang)
+
 	var err error
 	result := text
 	if srcLang != "en" && srcLang != dstLang {

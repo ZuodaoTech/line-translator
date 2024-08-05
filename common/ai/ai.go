@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"regexp"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
@@ -238,8 +239,16 @@ func (s *Instant) GrabJsonOutput(ctx context.Context, input string, outputKeys .
 	// try to parse the response
 	var resp map[string]any
 	if err := json.Unmarshal([]byte(input), &resp); err != nil {
-		slog.Error("[common.ai] GrabJsonOutput error", "input", input)
-		return nil, err
+		slog.Error("[common.ai] GrabJsonOutput error", "input", input, "error", err)
+
+		// use regex to extract the json part
+		// it could be multiple lines
+		re := regexp.MustCompile(`(?s)\{.*?\}`)
+		input = re.FindString(input)
+		if err := json.Unmarshal([]byte(input), &resp); err != nil {
+			slog.Error("[common.ai] GrabJsonOutput error again", "input", input, "error", err)
+			return nil, err
+		}
 	}
 
 	if len(outputKeys) == 0 {

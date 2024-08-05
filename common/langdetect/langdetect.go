@@ -71,8 +71,10 @@ func detectZhOrJa(text string) string {
 			zhCount++
 		}
 	}
+	// fmt.Printf("zhCount: %v\n", zhCount)
+	// fmt.Printf("jaCount: %v\n", jaCount)
 	// if there are more than twice as many Chinese characters as Japanese characters, it is Chinese
-	if zhCount > jaCount*2 {
+	if zhCount > jaCount*5 {
 		return "zh"
 	}
 	return "ja"
