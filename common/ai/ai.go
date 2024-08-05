@@ -201,6 +201,7 @@ func (s *Instant) CallInChain(ctx context.Context, params ChainParams) (*ChainRe
 			Role:    openai.ChatMessageRoleUser,
 			Content: params.Steps[i].Instruction,
 		})
+
 		resp, err := s.RawRequest(ctx, conv)
 		if err != nil {
 			return nil, err
@@ -245,6 +246,9 @@ func (s *Instant) GrabJsonOutput(ctx context.Context, input string, outputKeys .
 		// it could be multiple lines
 		re := regexp.MustCompile(`(?s)\{.*?\}`)
 		input = re.FindString(input)
+		// replace \\n -> \n
+		input = regexp.MustCompile(`\\n`).ReplaceAllString(input, "\n")
+		
 		if err := json.Unmarshal([]byte(input), &resp); err != nil {
 			slog.Error("[common.ai] GrabJsonOutput error again", "input", input, "error", err)
 			return nil, err

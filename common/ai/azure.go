@@ -10,7 +10,7 @@ import (
 )
 
 func (s *Instant) RawRequestAzureOpenAI(ctx context.Context, messages []azopenai.ChatRequestMessageClassification) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*180)
 	defer cancel()
 
 	resp, err := s.azureOpenAIClient.GetChatCompletions(ctx, azopenai.ChatCompletionsOptions{

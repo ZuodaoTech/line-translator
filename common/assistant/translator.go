@@ -3,7 +3,6 @@ package assistant
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/zuodaotech/line-translator/common/ai"
 )
@@ -34,9 +33,6 @@ Please provide the %s translation for above text.
 Please always return JSON format with the translated text.
 `, srcLang, dstLang, dstLang, example)
 
-	// set timeout for 60s
-	ctx, cancel := context.WithTimeout(ctx, time.Second*60)
-	defer cancel()
 	ret, err := a.aiInst.MultipleSteps(ctx, ai.ChainParams{
 		Format: "json",
 		Steps: []ai.ChainParamsStep{
