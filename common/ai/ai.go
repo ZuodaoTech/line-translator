@@ -248,7 +248,9 @@ func (s *Instant) GrabJsonOutput(ctx context.Context, input string, outputKeys .
 		input = re.FindString(input)
 		// replace \\n -> \n
 		input = regexp.MustCompile(`\\n`).ReplaceAllString(input, "\n")
-		
+		input = regexp.MustCompile(`\n`).ReplaceAllString(input, "")
+		input = regexp.MustCompile(`\"`).ReplaceAllString(input, "\"")
+
 		if err := json.Unmarshal([]byte(input), &resp); err != nil {
 			slog.Error("[common.ai] GrabJsonOutput error again", "input", input, "error", err)
 			return nil, err

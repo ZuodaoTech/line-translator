@@ -20,54 +20,6 @@ func getChannelAccessToken(jwtToken string) (string, *time.Time, error) {
 	data.Set("client_assertion", jwtToken)
 
 	return getAccessToken(tokenEndpoint, data)
-	// Create request
-	// req, err := http.NewRequest("POST", tokenEndpoint, strings.NewReader(data.Encode()))
-	// if err != nil {
-	// 	return "", nil, err
-	// }
-	// req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	// // Create HTTP client and send request
-	// client := &http.Client{}
-	// resp, err := client.Do(req)
-	// if err != nil {
-	// 	return "", nil, err
-	// }
-	// defer resp.Body.Close()
-
-	// // Read response
-	// body, err := io.ReadAll(resp.Body)
-	// if err != nil {
-	// 	return "", nil, err
-	// }
-
-	// // Check if the request was successful
-	// if resp.StatusCode != http.StatusOK {
-	// 	return "", nil, errors.New("failed to get channel access token: " + string(body))
-	// }
-
-	// // Parse response
-	// var result map[string]interface{}
-	// err = json.Unmarshal(body, &result)
-	// if err != nil {
-	// 	return "", nil, err
-	// }
-
-	// // Extract access token
-	// accessToken, ok := result["access_token"].(string)
-	// if !ok {
-	// 	return "", nil, errors.New("access token not found in response")
-	// }
-
-	// expiresInFlt, ok := result["expires_in"].(float64)
-	// if !ok {
-	// 	return "", nil, errors.New("expires_in not found in response")
-	// }
-	// expiresIn := int64(expiresInFlt)
-
-	// expiredAt := time.Now().Add(time.Duration(expiresIn)*time.Second - 10)
-
-	// return accessToken, &expiredAt, nil
 }
 
 func getChannelStatelessAccessToken(jwtToken string) (string, *time.Time, error) {
