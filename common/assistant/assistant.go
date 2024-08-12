@@ -1,7 +1,7 @@
 package assistant
 
 import (
-	"github.com/zuodaotech/line-translator/common/ai"
+	"github.com/lyricat/goutils/ai"
 )
 
 type (

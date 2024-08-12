@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/zuodaotech/line-translator/common/line"
+	"github.com/lyricat/goutils/social/line"
 )
 
 var (

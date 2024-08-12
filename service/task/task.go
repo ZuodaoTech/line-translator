@@ -3,7 +3,7 @@ package task
 import (
 	"context"
 
-	"github.com/zuodaotech/line-translator/common/uuid"
+	"github.com/lyricat/goutils/uuid"
 	"github.com/zuodaotech/line-translator/core"
 	"github.com/zuodaotech/line-translator/store"
 	"github.com/zuodaotech/line-translator/store/task"

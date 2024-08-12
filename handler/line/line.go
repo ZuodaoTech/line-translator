@@ -39,27 +39,6 @@ func HandleWebhook(syscfg *config.Config, taskz core.TaskService) http.HandlerFu
 					case webhook.GroupSource:
 						{
 							fmt.Printf("Group: %s\n\n", src.GroupId)
-							// cli, err := line.New(line.Config{
-							// 	ChannelID:  syscfg.Line.ChannelID,
-							// 	ChannelKey: syscfg.Line.ChannelKey,
-							// 	PrivateKey: syscfg.Line.JWTPrivateKey,
-							// })
-							// if err != nil {
-							// 	slog.Error("[handler.line] failed to create line client", "error", err)
-							// 	render.Error(w, http.StatusInternalServerError, err)
-							// 	return
-							// }
-							// _, _, err = cli.GenerateToken()
-							// if err != nil {
-							// 	slog.Error("[handler.line] failed to generate token", "error", err)
-							// 	return
-							// }
-
-							// if _, err := cli.ReplyTextMessage(e.ReplyToken, "", fmt.Sprintf("Hello, here is your group ID:\n%s", src.GroupId)); err != nil {
-							// 	slog.Error("[handler.line] failed to send text reply", "error", err, "groupID", src.GroupId)
-							// } else {
-							// 	slog.Info("[handler.line] sent text reply", "groupID", src.GroupId)
-							// }
 						}
 					case webhook.RoomSource:
 						{
@@ -88,6 +67,27 @@ func HandleWebhook(syscfg *config.Config, taskz core.TaskService) http.HandlerFu
 											"reply_token": e.ReplyToken,
 											"quote_token": msg.QuoteToken,
 											"text":        msg.Text,
+										},
+										Status: core.TaskStatusInit,
+									}
+
+									if _, err := taskz.CreateTask(ctx, data); err != nil {
+										slog.Error("[handler.line] failed to create task", "error", err)
+										render.Error(w, http.StatusInternalServerError, err)
+										return
+									}
+								}
+							case webhook.AudioMessageContent:
+								{
+									slog.Info("[handler.line] audio message", "audio", msg)
+									fmt.Printf("[handler.line] msg: %v\n", msg)
+									data := &core.Task{
+										UserID: 0,
+										Action: core.TaskActionFetchAudioAndTranscript,
+										Params: map[string]interface{}{
+											"group_id":    src.GroupId,
+											"reply_token": e.ReplyToken,
+											"message_id":  msg.Id,
 										},
 										Status: core.TaskStatusInit,
 									}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/zuodaotech/line-translator/common/ai"
+	"github.com/lyricat/goutils/ai"
 )
 
 func (a *Assistant) Translate(ctx context.Context, content, srcLang, dstLang string) (string, error) {

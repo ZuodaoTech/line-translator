@@ -5,9 +5,10 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/lyricat/goutils/langdetect"
+	"github.com/lyricat/goutils/speech"
 	"github.com/patrickmn/go-cache"
 	"github.com/zuodaotech/line-translator/common/assistant"
-	"github.com/zuodaotech/line-translator/common/langdetect"
 	"github.com/zuodaotech/line-translator/core"
 )
 
@@ -16,6 +17,9 @@ type (
 		LineChannelID     string
 		LineChannelKey    string
 		LineJWTPrivateKey string
+
+		AzureEndpoint string
+		AzureAPIKey   string
 	}
 
 	Worker struct {
@@ -25,6 +29,7 @@ type (
 		taskz core.TaskService
 
 		detector   *langdetect.Detector
+		speechCli  *speech.Client
 		tokenCache *cache.Cache
 	}
 )
@@ -37,6 +42,10 @@ func New(
 ) *Worker {
 
 	detector := langdetect.New()
+	speechCli := speech.New(speech.Config{
+		AzureEndpoint: cfg.AzureEndpoint,
+		AzureAPIKey:   cfg.AzureAPIKey,
+	})
 
 	c := cache.New(5*time.Minute, 10*time.Minute)
 
@@ -47,6 +56,7 @@ func New(
 		taskz: taskz,
 
 		detector:   detector,
+		speechCli:  speechCli,
 		tokenCache: c,
 	}
 }
@@ -89,6 +99,8 @@ func (w *Worker) ProcessTask(ctx context.Context, task *core.Task) error {
 	switch task.Action {
 	case core.TaskActionQuoteAndTranslate:
 		output, err = w.ProcessTaskActionQuoteAndTranslate(ctx, task)
+	case core.TaskActionFetchAudioAndTranscript:
+		output, err = w.ProcessTaskActionFetchAudioAndTranscript(ctx, task)
 	}
 
 	if err != nil {

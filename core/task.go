@@ -14,7 +14,8 @@ const (
 )
 
 const (
-	TaskActionQuoteAndTranslate = "quote_and_translate"
+	TaskActionQuoteAndTranslate       = "quote_and_translate"
+	TaskActionFetchAudioAndTranscript = "fetch_audio_and_transcript"
 )
 
 type (

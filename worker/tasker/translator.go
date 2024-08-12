@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/zuodaotech/line-translator/common/line"
+	"github.com/lyricat/goutils/social/line"
 	"github.com/zuodaotech/line-translator/core"
 )
 
@@ -40,9 +40,6 @@ func (w *Worker) ProcessTaskActionQuoteAndTranslate(ctx context.Context, task *c
 		dstLang = "zh"
 	}
 
-	fmt.Printf("srcLang: %v\n", srcLang)
-	fmt.Printf("dstLang: %v\n", dstLang)
-
 	var err error
 	result := text
 	if srcLang != "en" && srcLang != dstLang {
@@ -60,17 +57,15 @@ func (w *Worker) ProcessTaskActionQuoteAndTranslate(ctx context.Context, task *c
 	replyToken := task.Params.GetString("reply_token")
 	quoteToken := task.Params.GetString("quote_token")
 
-	if replyToken != "" {
-		cli, err := w.GetLineClient(groupID)
-		if err != nil {
-			slog.Error("[worker.tasker.translator] failed to generate token", "error", err)
-			return nil, err
-		}
-		if _, err := cli.ReplyTextMessage(replyToken, quoteToken, result); err != nil {
-			slog.Error("[worker.tasker.translator] failed to send text reply", "error", err)
-		} else {
-			slog.Info("[worker.tasker.translator] sent text reply")
-		}
+	cli, err := w.GetLineClient(groupID)
+	if err != nil {
+		slog.Error("[worker.tasker.translator] failed to generate token", "error", err)
+		return nil, err
+	}
+	if _, err := cli.ReplyTextMessage(replyToken, quoteToken, result); err != nil {
+		slog.Error("[worker.tasker.translator] failed to send text reply", "error", err)
+	} else {
+		slog.Info("[worker.tasker.translator] sent text reply")
 	}
 
 	return jsonMap, nil
@@ -86,6 +81,7 @@ func (w *Worker) GetLineClient(groupId string) (*line.Client, error) {
 		item, ok := val.(*TokenCacheItem)
 		if ok && item.ExpireAt.After(time.Now()) && item.AccessToken != "" {
 			slog.Info("[worker.tasker.translator] token is valid", "groupID", groupId, "expireAt", item.ExpireAt)
+			fmt.Printf("item.AccessToken: %v\n", item.AccessToken)
 			cli, err = line.NewFromAccessToken(item.AccessToken)
 			if err != nil {
 				return nil, err

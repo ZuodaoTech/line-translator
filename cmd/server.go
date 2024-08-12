@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/zuodaotech/line-translator/common/ai"
+	"github.com/lyricat/goutils/ai"
 	"github.com/zuodaotech/line-translator/common/assistant"
 	"github.com/zuodaotech/line-translator/config"
 	"github.com/zuodaotech/line-translator/handler"
@@ -80,6 +80,9 @@ var serverCmd = &cobra.Command{
 					LineChannelID:     cfg.Line.ChannelID,
 					LineChannelKey:    cfg.Line.ChannelKey,
 					LineJWTPrivateKey: cfg.Line.JWTPrivateKey,
+
+					AzureAPIKey:   cfg.Azure.Speech.APIKey,
+					AzureEndpoint: cfg.Azure.Speech.Endpoint,
 				}, composeAssistant, tasks, taskz),
 			}
 

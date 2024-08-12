@@ -39,6 +39,10 @@ type (
 			GptDeploymentID       string `yaml:"gpt_deployment_id"`
 			EmbeddingDeploymentID string `yaml:"embedding_deployment_id"`
 		} `yaml:"openai"`
+		Speech struct {
+			APIKey   string `yaml:"api_key"`
+			Endpoint string `yaml:"endpoint"`
+		} `yaml:"speech"`
 	}
 
 	Auth struct {
