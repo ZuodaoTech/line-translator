@@ -18,11 +18,18 @@ func (a *Assistant) Translate(ctx context.Context, content, srcLang, dstLang str
 {"output": "我喜欢学习新语言。"}
 `
 
+	en2ZhExample := `Example:
+I like to learn new languages.
+{"output": "我喜欢学习新语言。"}
+`
+
 	example := ""
 	if srcLang == "zh" && dstLang == "ja" {
 		example = zh2JaExample
 	} else if srcLang == "ja" && dstLang == "zh" {
 		example = ja2ZhExample
+	} else if srcLang == "en" && dstLang == "zh" {
+		example = en2ZhExample
 	}
 
 	inst1 := fmt.Sprintf(`You are an expert linguist, specializing in translation to %s and %s language.

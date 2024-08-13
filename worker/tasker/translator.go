@@ -38,11 +38,13 @@ func (w *Worker) ProcessTaskActionQuoteAndTranslate(ctx context.Context, task *c
 		dstLang = "ja"
 	} else if srcLang == "ja" {
 		dstLang = "zh"
+	} else if srcLang == "en" {
+		dstLang = "zh"
 	}
 
 	var err error
 	result := text
-	if srcLang != "en" && srcLang != dstLang {
+	if srcLang != dstLang {
 		result, err = w.assi.Translate(ctx, text, srcLang, dstLang)
 		if err != nil {
 			slog.Error("translate failed.", "error", err)
