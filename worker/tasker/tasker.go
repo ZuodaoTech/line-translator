@@ -2,10 +2,12 @@ package tasker
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/lyricat/goutils/langdetect"
+	"github.com/lyricat/goutils/social/line"
 	"github.com/lyricat/goutils/speech"
 	"github.com/patrickmn/go-cache"
 	"github.com/zuodaotech/line-translator/common/assistant"
@@ -101,6 +103,8 @@ func (w *Worker) ProcessTask(ctx context.Context, task *core.Task) error {
 		output, err = w.ProcessTaskActionQuoteAndTranslate(ctx, task)
 	case core.TaskActionFetchAudioAndTranscript:
 		output, err = w.ProcessTaskActionFetchAudioAndTranscript(ctx, task)
+	case core.TaskActionSendMessage:
+		output, err = w.ProcessTaskActionSendMessage(ctx, task)
 	}
 
 	if err != nil {
@@ -117,4 +121,76 @@ func (w *Worker) ProcessTask(ctx context.Context, task *core.Task) error {
 		return err
 	}
 	return nil
+}
+
+func (w *Worker) ProcessTaskActionSendMessage(ctx context.Context, task *core.Task) (core.JSONMap, error) {
+	text := task.Params.GetString("text")
+	if text == "" {
+		return nil, fmt.Errorf("source is empty")
+	}
+
+	groupID := task.Params.GetString("group_id")
+	if groupID == "" {
+		return nil, fmt.Errorf("group_id is empty")
+	}
+
+	replyToken := task.Params.GetString("reply_token")
+	quoteToken := task.Params.GetString("quote_token")
+
+	cli, err := w.GetLineClient(groupID)
+	if err != nil {
+		slog.Error("[worker.tasker] failed to generate token", "error", err)
+		return nil, err
+	}
+	if _, err := cli.ReplyTextMessage(replyToken, quoteToken, text); err != nil {
+		slog.Error("[worker.tasker] failed to send text reply", "error", err)
+	} else {
+		slog.Info("[worker.tasker] sent text reply")
+	}
+
+	return nil, nil
+}
+
+func (w *Worker) GetLineClient(groupId string) (*line.Client, error) {
+	var cli *line.Client
+	var err error
+	val, found := w.tokenCache.Get(groupId)
+
+	if found {
+		slog.Info("[worker.tasker] found token in cache", "groupID", groupId)
+		item, ok := val.(*TokenCacheItem)
+		if ok && item.ExpireAt.After(time.Now()) && item.AccessToken != "" {
+			slog.Info("[worker.tasker] token is valid", "groupID", groupId, "expireAt", item.ExpireAt)
+			fmt.Printf("item.AccessToken: %v\n", item.AccessToken)
+			cli, err = line.NewFromAccessToken(item.AccessToken)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if cli == nil {
+		cli, err = line.New(line.Config{
+			ChannelID:  w.cfg.LineChannelID,
+			ChannelKey: w.cfg.LineChannelKey,
+			PrivateKey: w.cfg.LineJWTPrivateKey,
+		})
+		if err != nil {
+			slog.Error("[worker.tasker] failed to create line client", "error", err)
+			return nil, err
+		}
+		token, expired, err := cli.GenerateToken()
+		if err != nil {
+			slog.Error("[worker.tasker] failed to generate token", "error", err)
+			return nil, err
+		}
+		expiredDur := time.Until(*expired)
+		slog.Info("[worker.tasker] generated token", "groupID", groupId, "expiredDur", expiredDur)
+		w.tokenCache.Set(groupId, &TokenCacheItem{
+			AccessToken: token,
+			ExpireAt:    *expired,
+		}, expiredDur)
+	}
+
+	return cli, nil
 }

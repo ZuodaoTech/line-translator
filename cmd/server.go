@@ -16,6 +16,7 @@ import (
 	"github.com/zuodaotech/line-translator/handler"
 	taskZ "github.com/zuodaotech/line-translator/service/task"
 	"github.com/zuodaotech/line-translator/store"
+	"github.com/zuodaotech/line-translator/store/conversation"
 	"github.com/zuodaotech/line-translator/store/task"
 	"github.com/zuodaotech/line-translator/worker/tasker"
 
@@ -69,6 +70,7 @@ var serverCmd = &cobra.Command{
 			DSN:    cfg.DB.DSN,
 		})
 		tasks := task.New(h)
+		conversations := conversation.New(h)
 
 		taskz := taskZ.New(taskZ.Config{}, tasks)
 
@@ -108,6 +110,7 @@ var serverCmd = &cobra.Command{
 					cfg,
 					se,
 					composeAssistant,
+					conversations,
 					taskz,
 				)
 				restHandler := restSvr.HandleRest()

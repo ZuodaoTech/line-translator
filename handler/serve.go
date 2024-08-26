@@ -21,6 +21,8 @@ func New(
 	se *session.Session,
 	composeAssistant *assistant.Assistant,
 
+	conversations core.ConversationStore,
+
 	taskz core.TaskService,
 ) Server {
 
@@ -29,6 +31,8 @@ func New(
 		syscfg:    syscfg,
 		session:   se,
 		assistant: composeAssistant,
+
+		conversations: conversations,
 
 		taskz: taskz,
 	}
@@ -44,6 +48,8 @@ type (
 		session   *session.Session
 		assistant *assistant.Assistant
 
+		conversations core.ConversationStore
+
 		taskz core.TaskService
 	}
 )
@@ -56,7 +62,7 @@ func (s Server) HandleRest() http.Handler {
 	})
 
 	r.Route("/line", func(r chi.Router) {
-		r.Post("/webhook", line.HandleWebhook(s.syscfg, s.taskz))
+		r.Post("/webhook", line.HandleWebhook(s.syscfg, s.conversations, s.taskz))
 		r.Get("/webhook", sys.RenderRoot())
 	})
 

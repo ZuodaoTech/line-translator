@@ -5,6 +5,7 @@ import (
 	"github.com/zuodaotech/line-translator/store"
 
 	_ "github.com/zuodaotech/line-translator/store/task"
+	_ "github.com/zuodaotech/line-translator/store/conversation"
 
 	"github.com/spf13/cobra"
 )

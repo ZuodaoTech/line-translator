@@ -22,6 +22,10 @@ func (a *Assistant) Translate(ctx context.Context, content, srcLang, dstLang str
 I like to learn new languages.
 {"output": "我喜欢学习新语言。"}
 `
+	zh2EnExample := `Example:
+我喜欢学习新语言。
+{"output": "I like to learn new languages."}
+`
 
 	example := ""
 	if srcLang == "zh" && dstLang == "ja" {
@@ -30,6 +34,8 @@ I like to learn new languages.
 		example = ja2ZhExample
 	} else if srcLang == "en" && dstLang == "zh" {
 		example = en2ZhExample
+	} else if srcLang == "zh" && dstLang == "en" {
+		example = zh2EnExample
 	}
 
 	inst1 := fmt.Sprintf(`You are an expert linguist, specializing in translation to %s and %s language.
@@ -51,6 +57,7 @@ Please always return JSON format with the translated text.
 		return "", err
 	}
 
+	fmt.Printf("ret: %+v\n", ret)
 	result, ok := ret.Json["output"].(string)
 	if !ok {
 		result = "Failed to Translate"

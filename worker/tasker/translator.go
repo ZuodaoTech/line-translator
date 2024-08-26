@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/lyricat/goutils/social/line"
 	"github.com/zuodaotech/line-translator/core"
 )
 
@@ -28,18 +27,29 @@ func (w *Worker) ProcessTaskActionQuoteAndTranslate(ctx context.Context, task *c
 		return nil, fmt.Errorf("group_id is empty")
 	}
 
+	strategy := task.Params.GetString("strategy")
+	if strategy == "" {
+		return nil, fmt.Errorf("strategy is empty")
+	}
+
 	srcLang, found := w.detector.Detect(text)
 	if !found {
 		srcLang = "en"
 	}
 
-	dstLang := "en"
-	if srcLang == "zh" {
-		dstLang = "ja"
-	} else if srcLang == "ja" {
-		dstLang = "zh"
-	} else if srcLang == "en" {
-		dstLang = "zh"
+	dstLang := ""
+	if strategy == core.ConversationStrategyZhEn {
+		if srcLang == "zh" {
+			dstLang = "en"
+		} else {
+			dstLang = "zh"
+		}
+	} else if strategy == core.ConversationStrategyZhJa {
+		if srcLang == "zh" {
+			dstLang = "ja"
+		} else {
+			dstLang = "zh"
+		}
 	}
 
 	var err error
@@ -71,48 +81,4 @@ func (w *Worker) ProcessTaskActionQuoteAndTranslate(ctx context.Context, task *c
 	}
 
 	return jsonMap, nil
-}
-
-func (w *Worker) GetLineClient(groupId string) (*line.Client, error) {
-	var cli *line.Client
-	var err error
-	val, found := w.tokenCache.Get(groupId)
-
-	if found {
-		slog.Info("[worker.tasker.translator] found token in cache", "groupID", groupId)
-		item, ok := val.(*TokenCacheItem)
-		if ok && item.ExpireAt.After(time.Now()) && item.AccessToken != "" {
-			slog.Info("[worker.tasker.translator] token is valid", "groupID", groupId, "expireAt", item.ExpireAt)
-			fmt.Printf("item.AccessToken: %v\n", item.AccessToken)
-			cli, err = line.NewFromAccessToken(item.AccessToken)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	if cli == nil {
-		cli, err = line.New(line.Config{
-			ChannelID:  w.cfg.LineChannelID,
-			ChannelKey: w.cfg.LineChannelKey,
-			PrivateKey: w.cfg.LineJWTPrivateKey,
-		})
-		if err != nil {
-			slog.Error("[worker.tasker.translator] failed to create line client", "error", err)
-			return nil, err
-		}
-		token, expired, err := cli.GenerateToken()
-		if err != nil {
-			slog.Error("[worker.tasker.translator] failed to generate token", "error", err)
-			return nil, err
-		}
-		expiredDur := time.Until(*expired)
-		slog.Info("[worker.tasker.translator] generated token", "groupID", groupId, "expiredDur", expiredDur)
-		w.tokenCache.Set(groupId, &TokenCacheItem{
-			AccessToken: token,
-			ExpireAt:    *expired,
-		}, expiredDur)
-	}
-
-	return cli, nil
 }

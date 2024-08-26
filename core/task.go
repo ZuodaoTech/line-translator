@@ -14,6 +14,7 @@ const (
 )
 
 const (
+	TaskActionSendMessage             = "send_message"
 	TaskActionQuoteAndTranslate       = "quote_and_translate"
 	TaskActionFetchAudioAndTranscript = "fetch_audio_and_transcript"
 )
