@@ -55,22 +55,7 @@ func HandleWebhook(syscfg *config.Config, conversations core.ConversationStore, 
 								return
 							}
 
-							// create a task to send response
-							data := &core.Task{
-								UserID: 0,
-								Action: core.TaskActionSendMessage,
-								Params: map[string]interface{}{
-									"group_id":    src.GroupId,
-									"reply_token": e.ReplyToken,
-									"text":        Usage,
-								},
-								Status: core.TaskStatusInit,
-							}
-							if _, err := taskz.CreateTask(ctx, data); err != nil {
-								slog.Error("[handler.line] failed to create task", "error", err)
-								render.Error(w, http.StatusInternalServerError, err)
-								return
-							}
+							quickRespond(ctx, Usage, src.GroupId, e.ReplyToken, taskz)
 						}
 					case webhook.RoomSource:
 						{
